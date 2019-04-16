@@ -1,0 +1,4 @@
+dcj\ors\mj\utils\SftpHelper.class
+dcj\ors\mj\exceptions\Non200ReturnException.class
+dcj\ors\mj\exceptions\NonSuccessfulAggregationResponse.class
+dcj\ors\mj\exceptions\ValidationException.class

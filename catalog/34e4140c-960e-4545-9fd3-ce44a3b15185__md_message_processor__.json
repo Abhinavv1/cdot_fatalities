@@ -1,0 +1,16 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "Fatalities1a"
+        }
+    },
+    "outputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "Fatalities1a"
+        }
+    },
+    "id": "34e4140c-960e-4545-9fd3-ce44a3b15185",
+    "version": "5.2.0.0"
+}

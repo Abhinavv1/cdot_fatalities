@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.soc</groupId>
+	<artifactId>dcj-ors-state-judicial-court-filings-job</artifactId>
+	<version>1.0.0</version>
+	<packaging>mule</packaging>
+	<name>Mule dcj-ors-state-judicial-court-filings-job Application</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<mule.version>3.9.1</mule.version>
+		<mule.tools.version>1.2</mule.tools.version>
+
+		<company.abbreviation>soc</company.abbreviation>
+
+		<!-- Deployment Requirements -->
+		<deploy.zone>PII</deploy.zone>
+
+		<deploy.tier>BATCH</deploy.tier>
+		<deploy.targetType>cluster</deploy.targetType>
+		<deploy.instance>01</deploy.instance>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+				<property>
+					<name>env</name>
+					<value>dev</value>
+				</property>
+			</activation>
+			<properties>
+				<deploy.businessGroup/>
+				<deploy.environment>DEV</deploy.environment>
+				<deploy.applicationName>${company.abbreviation}-dev-${project.artifactId}</deploy.applicationName>
+			</properties>
+		</profile>
+		<profile>
+			<id>test</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+				<property>
+					<name>env</name>
+					<value>test</value>
+				</property>
+			</activation>
+			<properties>
+				<sonar.projectKey>${company.abbreviation}-dev-${artifactId}</sonar.projectKey>
+				<sonar.sources>src</sonar.sources>
+				<sonar.exclusions>src/test/**</sonar.exclusions>
+				<sonar.projectName>(dev) dcj-ors-mj-datawarehouse-sys-api
+					Application</sonar.projectName>
+
+				<deploy.businessGroup/>
+				<deploy.environment>TEST</deploy.environment>
+				<deploy.applicationName>${company.abbreviation}-test-${project.artifactId}</deploy.applicationName>
+			</properties>
+		</profile>
+		<profile>
+			<id>prod</id>
+			<activation>
+				<property>
+					<name>env</name>
+					<value>prod</value>
+				</property>
+			</activation>
+			<properties>
+				<deploy.businessGroup/>
+				<deploy.environment>PROD</deploy.environment>
+				<deploy.applicationName>${company.abbreviation}-${project.artifactId}</deploy.applicationName>
+			</properties>
+		</profile>
+	</profiles>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-app-maven-plugin</artifactId>
+				<version>${mule.tools.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<copyToAppsDirectory>true</copyToAppsDirectory>
+					<inclusions>
+
+						<inclusion>
+							<groupId>org.mule.modules</groupId>
+							<artifactId>sftp-lite-connector</artifactId>
+						</inclusion>
+
+
+						<inclusion>
+							<groupId>org.mule.consulting</groupId>
+							<artifactId>eframework</artifactId>
+						</inclusion>
+
+						<inclusion>
+							<groupId>org.mule.modules</groupId>
+							<artifactId>e-framework-connector</artifactId>
+						</inclusion>
+
+						<inclusion>
+							<groupId>org.mule.consulting</groupId>
+							<artifactId>timerInterceptor</artifactId>
+						</inclusion>
+
+						<inclusion>
+							<groupId>com.mulesoft.security</groupId>
+							<artifactId>mule-module-security-property-placeholder</artifactId>
+						</inclusion>
+						<inclusion>
+							<groupId>org.mule.transports</groupId>
+							<artifactId>mule-transport-amqp</artifactId>
+						</inclusion>
+					</inclusions>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<version>2.2.1</version>
+				<configuration>
+					<deploymentType>arm</deploymentType>
+					<username>${u}</username>
+					<password>${p}</password>
+					<applicationName>${deploy.applicationName}</applicationName>
+					<businessGroup>${deploy.businessGroup}</businessGroup>
+					<redeploy>true</redeploy>
+					<uri>https://10.51.47.203/</uri>
+					<armInsecure>true</armInsecure>
+				</configuration>
+				<executions>
+					<execution>
+						<id>deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>deploy</goal>
+						</goals>
+						<configuration>
+							<environment>${deploy.environment}-${deploy.tier}-${deploy.zone}</environment>
+							<target>${deploy.environment}-${deploy.tier}-${deploy.zone}-${deploy.instance}</target>
+							<targetType>${deploy.targetType}</targetType>
+						</configuration>
+					</execution>
+					<!-- uncomment for two tier deployment <execution> <id>deploy</id> <phase>deploy</phase> 
+						<goals> <goal>deploy</goal> </goals> <configuration> <environment>${deploy.environment}-${deploy.tier2}-${deploy.zone}</environment> 
+						<target>${deploy.environment}-${deploy.tier2}-${deploy.zone}-${deploy.instance2}</target> 
+						<targetType>${deploy.targetType2}</targetType> </configuration> </execution> -->
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>add-resource</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>add-resource</goal>
+						</goals>
+						<configuration>
+							<resources>
+								<resource>
+									<directory>src/main/app/</directory>
+								</resource>
+								<resource>
+									<directory>src/main/api/</directory>
+								</resource>
+								<resource>
+									<directory>mappings/</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<!-- Mule Dependencies -->
+	<dependencies>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>sftp-lite-connector</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>8.0.30</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mule.consulting</groupId>
+			<artifactId>timerInterceptor</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mule.consulting</groupId>
+			<artifactId>eframework</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>e-framework-connector</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+
+		<!-- Xml configuration -->
+		<dependency>
+			<groupId>com.mulesoft.muleesb</groupId>
+			<artifactId>mule-core-ee</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Xml configuration -->
+		<dependency>
+			<groupId>com.mulesoft.muleesb.modules</groupId>
+			<artifactId>mule-module-spring-config-ee</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Mule Transports -->
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-file</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-http</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.muleesb.transports</groupId>
+			<artifactId>mule-transport-jdbc-ee</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.muleesb.transports</groupId>
+			<artifactId>mule-transport-jms-ee</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-vm</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Mule Modules -->
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-scripting</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-xml</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- for testing -->
+		<dependency>
+			<groupId>org.mule.tests</groupId>
+			<artifactId>mule-tests-functional</artifactId>
+			<version>${mule.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.security</groupId>
+			<artifactId>mule-module-security-property-placeholder</artifactId>
+			<version>1.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-sftp</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-http</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-spring-config</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.weave</groupId>
+			<artifactId>mule-plugin-weave</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.transports</groupId>
+			<artifactId>mule-transport-amqp</artifactId>
+			<version>3.7.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-schedulers</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-validation</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-json</artifactId>
+			<version>${mule.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	<dependency>
+            <groupId>org.mule.transports</groupId>
+            <artifactId>mule-transport-email</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-db</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+
+	<repositories>
+		<repository>
+			<id>Central</id>
+			<name>Central</name>
+			<url>http://repo1.maven.org/maven2/</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-releases</id>
+			<name>MuleSoft Releases Repository</name>
+			<url>http://repository.mulesoft.org/releases/</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-snapshots</id>
+			<name>MuleSoft Snapshots Repository</name>
+			<url>http://repository.mulesoft.org/snapshots/</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-master</id>
+			<name>MuleSoft Master Repository</name>
+			<url>https://repository-master.mulesoft.org/nexus/content/groups/public/</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mulesoft-release</id>
+			<name>mulesoft release repository</name>
+			<layout>default</layout>
+			<url>http://repository.mulesoft.org/releases/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+
+</project>
